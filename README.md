@@ -6,6 +6,9 @@ A randomized complete block design (RCB[1]) experiment analyzing the effect of s
 
 This project investigates whether the type of sensory cue presented, visual (LED), auditory (buzzer), or combined (both), produces meaningful differences in human reaction time. Reaction time was measured with an Arduino Uno-based timing rig, and the data were analyzed using a Randomized Complete Block Design with Person as the blocking factor, extended to a linear mixed-effects model to account for replication within blocks.
 
+<img src="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExdzFpMGQzZjZxaWp3aHU0OWRnZ29oMXhod3hkYTV5dmNwMXUwOGx6NiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/mFDWuDppjQJjite6FS/giphy.gif" 
+     width="250" style="display:block; margin-left:auto; margin-right:auto;">
+
 **Response variable:** Reaction time (milliseconds), recorded automatically by the Arduino.
 
 **Treatment factor, Cue Type (3 levels):**
