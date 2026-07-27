@@ -249,15 +249,15 @@ Blocking, randomization, and standardized procedures together minimized uncontro
 
 <br>
 
-![](C:\Users\chris\OneDrive\Documents\Professional Development\BYUI\Fall 2025\Math 326 Experimental Design\CaseStudies\CB1\Arduino2.jpg)
+![](Arduino2.jpg)
 
 <br>
 
-![](C:\Users\chris\OneDrive\Documents\Professional Development\BYUI\Fall 2025\Math 326 Experimental Design\CaseStudies\CB1\Arduino0.jpg)
+![](Arduino0.jpg)
 
 <br>
 
-![](C:\Users\chris\OneDrive\Documents\Professional Development\BYUI\Fall 2025\Math 326 Experimental Design\CaseStudies\CB1\Arduino1.jpg)
+![](Arduino1.jpg)
 
 <br>
 
@@ -283,7 +283,7 @@ library(kableExtra)
 
 
 ```{r cars}
-arduino <- readxl::read_xlsx("C:\\Users\\chris\\OneDrive\\Documents\\Professional Development\\BYUI\\Fall 2025\\Math 326 Experimental Design\\CaseStudies\\CB1\\CB1.xlsx")
+arduino <- readxl::read_xlsx("CB1.xlsx")
 arduino$person <- as.factor(arduino$person)
 arduino$cue <- as.factor(arduino$cue)
 arduino$trial <- as.factor(arduino$trial)
