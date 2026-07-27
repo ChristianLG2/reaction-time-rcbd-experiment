@@ -4,11 +4,11 @@ A randomized complete block design (RCB[1]) experiment analyzing the effect of s
 
 ## Overview
 
-This project investigates whether the type of sensory cue presented — visual (LED), auditory (buzzer), or combined (both) — produces meaningful differences in human reaction time. Reaction time was measured with an Arduino Uno-based timing rig, and the data were analyzed using a Randomized Complete Block Design with Person as the blocking factor, extended to a linear mixed-effects model to account for replication within blocks.
+This project investigates whether the type of sensory cue presented, visual (LED), auditory (buzzer), or combined (both), produces meaningful differences in human reaction time. Reaction time was measured with an Arduino Uno-based timing rig, and the data were analyzed using a Randomized Complete Block Design with Person as the blocking factor, extended to a linear mixed-effects model to account for replication within blocks.
 
 **Response variable:** Reaction time (milliseconds), recorded automatically by the Arduino.
 
-**Treatment factor — Cue Type (3 levels):**
+**Treatment factor, Cue Type (3 levels):**
 - **LED** – visual cue
 - **BUZZER** – auditory cue
 - **BOTH** – simultaneous audio-visual cue
@@ -17,7 +17,7 @@ This project investigates whether the type of sensory cue presented — visual (
 
 ## Design
 
-A conventional RCB[1] design assigns each treatment to each block exactly once. In this experiment, each participant instead completed multiple trials per cue type (5 LED, 5 BUZZER, 5 BOTH — 15 trials per person, 75 observations total), introducing replication within blocks. Because Cue Type is a fixed effect and Participant is a random blocking factor, the resulting participant-by-cue interaction is mixed (fixed × random), which requires a **linear mixed-effects model** rather than the classical unreplicated RCB[1] ANOVA.
+A conventional RCB[1] design assigns each treatment to each block exactly once. In this experiment, each participant instead completed multiple trials per cue type (5 LED, 5 BUZZER, 5 BOTH, 15 trials per person, 75 observations total), introducing replication within blocks. Because Cue Type is a fixed effect and Participant is a random blocking factor, the resulting participant-by-cue interaction is mixed (fixed × random), which requires a **linear mixed-effects model** rather than the classical unreplicated RCB[1] ANOVA.
 
 **Model:**
 
@@ -61,7 +61,7 @@ The mixed-effects model found a statistically significant effect of Cue Type on 
 | BOTH vs BUZZER | — | 0.225 |
 | BUZZER vs LED | — | 0.409 |
 
-Only the BOTH vs. LED comparison reached significance, indicating that combined audio-visual cues produce meaningfully faster reactions than visual cues alone — consistent with theories of multisensory integration and redundant signal facilitation.
+Only the BOTH vs. LED comparison reached significance, indicating that combined audio-visual cues produce meaningfully faster reactions than visual cues alone, consistent with theories of multisensory integration and redundant signal facilitation.
 
 Residual diagnostics (Q-Q plot, residuals vs. fitted, residuals vs. order) indicated the normality and constant-variance assumptions were reasonably satisfied, so no response transformation was needed.
 
