@@ -1,0 +1,503 @@
+---
+title: "Case Study - CB[1]"
+subtitle: "Effects of Sensory Cues on Reaction Time"
+author: "Christian Lira Gonzalez"
+date: "2025-11-15"
+output:
+  html_document:
+    theme: journal
+    toc: true
+    code_folding: show
+    toc_float: true
+---
+
+# Introduction
+
+Reaction time is a fundamental measure of human attention and responsiveness, making it a useful variable for studying how different sensory cues influence performance. In this experiment, I investigated whether different types of sensory stimuli lead to meaningful differences in human reaction time. The response variable is reaction time (milliseconds), recorded using an Arduino-based timing system. This variable is appropriate because it is:
+
+- continuous and quantitative,
+- valid, since reaction time directly reflects human responsiveness,
+- reliable, as the Arduino measures time automatically and consistently.
+
+The primary treatment factor in this study is Cue Type, with three levels:
+
+- **LED** – visual cue  
+- **BUZZER** – auditory cue  
+- **BOTH** – simultaneous audio–visual cue  
+
+To reduce the large natural variability in baseline reaction speed across individuals, I implemented a Randomized Complete Block Design (CB[1]), with **Person serving as the blocking factor (with a total of 5 Blocks)**. Each participant completed every cue condition, making them a complete block. Blocking on participant isolates the effect of cue type while controlling for individual differences.
+
+### Three Key Experimental Decisions  
+
+Every experiment requires three foundational decisions:  
+1. **Response Variable:** Reaction time in milliseconds.  
+2. **Factor(s):** The main factor is Cue Type with three levels (LED, BUZZER, BOTH).  
+3. **Experimental Units / Design:** Individual trials nested within participants, analyzed through a CB[1] structure where each participant receives all treatments.
+
+The hypotheses for the ANOVA were:
+
+- **H₀: μ_LED = μ_BUZZER = μ_BOTH**
+- **Hₐ: At least one mean reaction time differs among cue types**  
+
+**A significance level of α = 0.05 was used.**
+
+# Methods
+
+### Design Justification
+
+A Randomized Complete Block Design (CB[1]) was chosen because the research question focuses on comparing reaction times across three cue types while controlling for substantial baseline differences between individuals. Reaction time varies naturally from person to person, so treating participant as a blocking factorimproves precision by removing nuisance variability unrelated to the treatment effect.
+
+Each participant experienced all three cue types, satisfying the complete block structure. Cue Type was the only intentionally manipulated factor, making a CB[1] design appropriate for this study.
+
+In a conventional CB[1] design, each block receives each treatment exactly once, and no interaction between block and treatment can be estimated. In this experiment, however, replication was included within each block, as each participant completed multiple trials under each cue condition. Replication was intentionally included to reduce trial-to-trial measurement noise inherent in reaction-time tasks and to improve the reliability of estimated treatment means.
+
+Because replication is present, the design allows estimation of a participant-by-cue interaction, representing the possibility that individuals respond differently to the same cue type. Since Cue Type is a fixed effect and Participant is a random blocking factor, this interaction is mixed (fixed x random) and must be treated as a random effect. As a result, analysis requires a mixed-effects model rather than the classical CB[1] ANOVA used for unreplicated designs.
+
+**Hypothesis and Model:**
+
+Because each participant completed multiple trials for each cue type, the experiment includes replication within blocks. This requires a mixed-effects model that accounts for both fixed and random sources of variation.
+
+The model used to analyze the reaction time data is:
+
+\[
+y_{ijk} = \mu + \beta_j + b_i + (b\beta)_{ij} + \varepsilon_{ijk}
+\]
+
+Where:
+
+- **\( y_{ijk} \)**  
+  is the reaction time (in milliseconds) for the kth trial of participant i under cue type j.
+
+- **\( \mu \)**  
+  is the grand mean reaction time across all participants, cue types, and trials.
+
+- **\( \beta_j \)**  
+  is the fixed effect of cue type (j = LED, BUZZER, BOTH).  
+  This represents the treatment effect of interest in the study.
+
+- **\( b_i \)**  
+  is the random effect of participant(i = 1, …, n*), representing baseline differences in reaction speed across individuals. Participants are treated as a random sample from a larger population.
+
+- **\( (b\beta)_{ij} \)**  
+  is the random participant-by-cue interaction, capturing the fact that different participants may respond differently to the same cue type.
+
+- **\( \varepsilon_{ijk} \)** 
+  is the residual error term, representing trial-to-trial variability not explained by cue type or participant.
+
+<br> 
+
+**Hypothesis of Interest:**
+
+The hypothesis of interest concerns the effect of Cue Type:
+
+\[
+H_0: \beta_1 = \beta_2 = \beta_3 = 0
+\]
+
+\[
+H_a: \beta_j \neq 0 \quad \text{for at least one cue type } j
+\]
+
+This tests whether mean reaction time differs across cue conditions, after accounting for participant-level variability and the participant-by-cue interaction.
+
+To avoid introducing additional confounding related to reflex training, individuals with competitive or high-frequency video game experience were excluded.
+
+
+### Instrumentation and Measurement
+
+Reaction time was recorded using an Arduino Uno connected to:
+
+- an LED for visual cues,  
+- a buzzer for auditory cues,  
+- a momentary push button for participant responses.
+
+The Arduino generated random delays prior to cue presentation and measured the elapsed time from cue onset to button press with millisecond accuracy.
+
+### Treatments and Replication
+
+Each participant completed:
+
+- 5 LED trials  
+- 5 BUZZER trials 
+- 5 BOTH trials
+
+This resulted in 15 trials per person and 75 total recorded observations.  
+For the CB[1] analysis, the mean reaction time for each cue type within each block was computed, producing one observation per treatment per block (15 observations total).
+
+### Randomization Procedure
+
+To minimize confounding from learning, fatigue, or anticipation:
+
+- Each participant received a unique randomized sequence of 15 trials.  
+- Arduino’s `random()` function randomly assigned the order of LED, BUZZER, and BOTH trials.  
+- No participant received the same trial order as another.
+
+Randomization ensured no cue type consistently appeared earlier or later in the session, reducing time-related bias.
+
+<br>
+
+```cpp
+// Full Arduino program used during the experiment
+// ===========================================
+// Reaction Time Experiment (Auto 15 Trials)
+// LED = pin 8, Buzzer = pin 9, Button = pin 2
+// ===========================================
+
+int ledPin = 8;
+int buzzerPin = 9;
+int buttonPin = 2;
+
+// trial schedule (15 trials, 5 of each cue)
+int trials[15] = {1,1,1,1,1, 2,2,2,2,2, 3,3,3,3,3};
+
+unsigned long startTime;
+unsigned long reactionTime;
+
+void setup() {
+  pinMode(ledPin, OUTPUT);
+  pinMode(buzzerPin, OUTPUT);
+  pinMode(buttonPin, INPUT);
+
+  Serial.begin(9600);
+  randomSeed(analogRead(A0));
+
+  Serial.println("subject,trial,cue,reaction_ms");
+
+  // Randomize the trial list using Fisher-Yates shuffle
+  for (int i=14; i>0; i--) {
+    int j = random(0, i+1);
+    int temp = trials[i];
+    trials[i] = trials[j];
+    trials[j] = temp;
+  }
+}
+
+void loop() {
+  if (Serial.available()) {
+    char c = Serial.read();
+    if (c == 's') {
+      runAllTrials();
+    }
+  }
+}
+
+void runAllTrials() {
+  for (int t=0; t<15; t++) {
+    int cueType = trials[t];
+
+    // ensure button is released
+    while (digitalRead(buttonPin) == HIGH) {}
+
+    // random delay 3–5 seconds between trials
+    delay(random(3000, 5000));
+
+    // Activate cue
+    if (cueType == 1) digitalWrite(ledPin, HIGH);
+    else if (cueType == 2) digitalWrite(buzzerPin, HIGH);
+    else if (cueType == 3) {
+      digitalWrite(ledPin, HIGH);
+      digitalWrite(buzzerPin, HIGH);
+    }
+
+    startTime = millis();
+
+    // wait for reaction
+    while (digitalRead(buttonPin) == LOW) {}
+
+    delay(20); // debounce
+
+    reactionTime = millis() - startTime;
+
+    // turn off cues
+    digitalWrite(ledPin, LOW);
+    digitalWrite(buzzerPin, LOW);
+
+    // print CSV
+    Serial.print("X");               // subject ID placeholder
+    Serial.print(",");
+    Serial.print(t+1);               // trial number 1–15
+    Serial.print(",");
+    
+    if (cueType == 1) Serial.print("LED");
+    if (cueType == 2) Serial.print("BUZZER");
+    if (cueType == 3) Serial.print("BOTH");
+
+    Serial.print(",");
+    Serial.println(reactionTime);
+
+    // wait for release
+    while (digitalRead(buttonPin) == HIGH) {}
+  }
+
+  Serial.println("=== Experiment complete ===");
+}
+
+```
+
+This ensured that no treatment consistently appeared earlier or later in the session.
+
+### Control of Variability
+
+To maintain consistent experimental conditions:
+
+- All trials took place indoors at a consistent distance from the Arduino setup.  
+- Participants used the same hardware (button, LED, buzzer).  
+- Standardized instructions were read to every participant.  
+- Each participant completed a brief practice trial to reduce learning effects during the real experiment.
+
+Blocking, randomization, and standardized procedures together minimized uncontrolled sources of variability.
+
+<br>
+
+![](C:\Users\chris\OneDrive\Documents\Professional Development\BYUI\Fall 2025\Math 326 Experimental Design\CaseStudies\CB1\Arduino2.jpg)
+
+<br>
+
+![](C:\Users\chris\OneDrive\Documents\Professional Development\BYUI\Fall 2025\Math 326 Experimental Design\CaseStudies\CB1\Arduino0.jpg)
+
+<br>
+
+![](C:\Users\chris\OneDrive\Documents\Professional Development\BYUI\Fall 2025\Math 326 Experimental Design\CaseStudies\CB1\Arduino1.jpg)
+
+<br>
+
+# Analysis
+
+The goal of this analysis is to evaluate whether reaction time differs among the three
+cue types while properly accounting for the variability between participants. The
+analysis begins by importing and preparing the dataset, followed by numerical and
+graphical summaries to explore patterns and identify any irregularities. We then check
+the assumptions required for ANOVA, conduct the randomized complete block analysis,
+and perform post-hoc comparisons to determine which cue types differ significantly.
+Together, these steps provide a thorough and reliable assessment of how sensory cues
+influence human reaction speed.
+
+```{r setup, include=FALSE}
+library(car)
+library(emmeans)
+library(knitr)
+library(dplyr)
+library(mosaic)
+library(kableExtra)
+```
+
+
+```{r cars}
+arduino <- readxl::read_xlsx("C:\\Users\\chris\\OneDrive\\Documents\\Professional Development\\BYUI\\Fall 2025\\Math 326 Experimental Design\\CaseStudies\\CB1\\CB1.xlsx")
+arduino$person <- as.factor(arduino$person)
+arduino$cue <- as.factor(arduino$cue)
+arduino$trial <- as.factor(arduino$trial)
+
+View(arduino)
+
+# Summary by cue type
+favstats(reaction_ms ~ cue, data = arduino) |>
+  kable(digits = 2, caption = "Summary of Reaction Time by Cue Type") |>
+  kable_styling(full_width = FALSE)
+
+```
+
+<br>
+
+```{r pressure, echo=FALSE}
+# Summary by person (block)
+favstats(reaction_ms ~ person, data = arduino) |>
+  kable(digits = 2, caption = "Summary of Reaction Time by Person (Block)") |>
+  kable_styling(full_width = FALSE)
+```
+
+<br>
+
+Table 1 shows the summary of reaction times for each Cue Type. The BOTH condition produced the lowest mean reaction time (221.44 ms), followed by BUZZER (252.24 ms), while the LED cue resulted in the slowest responses (275.16 ms). This same pattern appears in the quartiles: the LED condition has consistently higher Q1, median, and Q3 values than the other two cue types. These descriptive statistics suggest that participants respond more quickly when both visual and auditory cues are presented simultaneously, and slowest when only the LED is used.
+
+The variability also differs across cues. The BUZZER condition has the largest standard deviation (67.04 ms), indicating greater inconsistency in participant responses to auditory cues. The LED condition has the smallest standard deviation (36.54 ms), suggesting more stable responses. The maximum value of 440 ms under BUZZER appears unusually high compared to the rest of the data and likely reflects a single slow response or momentary lapse in attention. However, because each participant completed 15 trials and the CB[1] analysis uses block-wise means, this outlier has minimal influence on the final ANOVA.
+
+Table 2 summarizes reaction times by participant (block). Reaction time varies substantially from person to person, which confirms that blocking was necessary and appropriate. Participant 4 had the highest mean reaction time (280.53 ms), while Participant 5 had the lowest (232.07 ms). These differences reflect natural variation in baseline motor response speed and would have increased unexplained variability if not accounted for through a blocking design. Standard deviations are also different across participants, with Person 3 showing the largest variability (71.23 ms), again supporting the decision to block on person.
+
+In summary, the descriptive statistics reveal that:
+- Reaction times differ by cue type, with BOTH fastest, BUZZER intermediate, and LED slowest.
+- Considerable variability exists between participants, validating the CB[1] approach.
+- One mild outlier (440 ms) is present but does not meaningfully affect the design because cell means are used in the ANOVA.
+
+These numerical summaries justify moving forward to the graphical summaries and formal ANOVA analysis.
+
+<br>
+
+### Graphical Summaries
+
+<br>
+
+```{r boxplot, echo=FALSE}
+library(ggplot2)
+
+ggplot(arduino, aes(cue, reaction_ms)) +
+  geom_jitter(width = 0.1, alpha = 0.6) +
+  stat_summary(fun = mean, geom = "line", aes(group = 1)) +
+  stat_summary(fun = mean, geom = "point", size = 3) +
+  labs(
+    title = "Reaction Time by Cue Type",
+    x = "Cue Type",
+    y = "Reaction Time (ms)"
+  ) +
+  theme_classic()
+```
+
+<br>
+
+```{r boxplot2, echo=FALSE}
+# by Person (Block)
+ggplot(arduino, aes(person, reaction_ms)) +
+  geom_jitter(width = 0.1, alpha = 0.6) +
+  stat_summary(fun = mean, geom = "line", aes(group = 1)) +
+  stat_summary(fun = mean, geom = "point", size = 3) +
+  labs(
+    title = "Reaction Time by Participant (Block)",
+    x = "Participant",
+    y = "Reaction Time (ms)"
+  ) +
+  theme_classic()
+```
+
+<br>
+
+The dotplot of reaction time by Cue Type shows a clear separation among the three treatments. The BOTH cue consistently produces the fastest reaction times, while LED produces the slowest, with BUZZER falling in between. The spread of points is slightly wider for the BUZZER cue, reinforcing the numerical finding that this condition has the highest variability.
+
+The dotplot by Participant highlights substantial baseline differences in reaction time across individuals. Some participants (e.g., Person 5) are consistently faster, while others (e.g., Person 4) show higher overall reaction times. This visual variation supports the decision to use a blocking design, as failing to account for these differences would inflate the residual error and reduce power.
+
+
+### The Model
+
+Because replication was present within each block, a linear mixed-effects model was used to obtain a valid F-test for the treatment effect. Participant and participant-by-cue effects were treated as random to account for individual baseline differences and differential responses to cue types.
+
+The model was fit as:
+
+```{r, message=FALSE, warning=FALSE}
+library(lmerTest)
+
+cb1_mixed <- lmer(
+  reaction_ms ~ cue + (1 | person) + (1 | person:cue),
+  data = arduino
+)
+
+anova(cb1_mixed)
+
+
+```
+
+<br>
+
+Because replication was present within blocks, participant and participant-by-cue effects were treated as random, and the F-test for Cue Type was obtained using a mixed-effects model with Satterthwaite’s method for denominator degrees of freedom.
+
+The effect of Cue Type was statistically significant,
+F(2, 8) = 5.05, p = 0.038, indicating that at least one cue type produces a different mean reaction time. This result is consistent with the descriptive summaries, which suggested that the BOTH cue condition tended to produce faster responses compared to the other cue types.
+
+Participant variability was accounted for through the random-effects structure of the model rather than tested as a fixed factor. Including participant as a random blocking effect reduces unexplained variability by accounting for consistent differences in baseline reaction speed across individuals, thereby improving the precision of the treatment comparison.
+
+Because Cue Type was statistically significant, follow-up comparisons were conducted to determine which specific cue conditions differ from one another.
+
+<br>
+
+### Assumption Checks
+
+```{r}
+
+par(mfrow = c(1, 3))
+
+# 1. Residuals vs Fitted (constant variance)
+plot(
+  fitted(cb1_mixed),
+  resid(cb1_mixed),
+  xlab = "Fitted Values",
+  ylab = "Residuals",
+  main = "Residuals vs Fitted"
+)
+abline(h = 0, lty = 2)
+
+# 2. Normal Q–Q (normality)
+qqnorm(
+  resid(cb1_mixed),
+  main = "Normal Q–Q Plot"
+)
+qqline(resid(cb1_mixed))
+
+# 3. Residuals vs Order (independence)
+plot(
+  resid(cb1_mixed),
+  pch = 18,
+  xlab = "Observation Order",
+  ylab = "Residuals",
+  main = "Residuals vs Order"
+)
+
+par(mfrow = c(1, 1))
+```
+
+<br>
+
+The assumptions of normality and homogeneity of variance were evaluated using residual diagnostic plots.
+
+The normal Q–Q plot of the residuals shows points falling reasonably close to the reference line, with only mild deviations at the extreme tails. This indicates that the normality assumption is reasonably satisfied.
+
+The residuals versus fitted values plot shows no clear systematic pattern or funnel shape. The spread of residuals remains approximately constant across the range of fitted values, suggesting that the homogeneity of variance assumption is met. Although a few residuals lie farther from zero, they do not appear to unduly influence the overall pattern or indicate a violation of model assumptions.
+
+Because both assumptions appear to be satisfied, no transformation of the response variable was necessary.
+
+Independence is assumed at the level of the experimental units and model errors. Raw trials within the same participant are not independent because they are repeated measurements collected during a single session. This dependence is explicitly accounted for in the analysis by the mixed-effects model through random effects for participant and participant-by-cue.
+
+After accounting for these random effects, the remaining residuals are assumed to be independent. This assumption is reasonable because each participant completed the task individually and the order of trials was randomized, reducing the likelihood of systematic learning, fatigue, or time-order effects.
+
+### Post Hoc Analysis
+
+```{r}
+library(emmeans)
+
+emm_cue <- emmeans(cb1_mixed, ~ cue)
+
+pairs(emm_cue, adjust = "tukey")
+
+```
+
+<br>
+
+Only one pairwise comparison reached statistical significance:
+
+BOTH vs LED
+Reaction times under the BOTH cue were significantly faster than under the LED cue(estimated mean difference = −53.7 ms, p = 0.0319).This negative estimate indicates that the BOTH cue produced shorter reaction times than the LED cue.
+The magnitude of this difference suggests a meaningful performance advantage when auditory and visual cues are combined.
+
+The remaining pairwise comparisons were not statistically significant:
+
+BOTH vs BUZZER (p = 0.225)
+
+BUZZER vs LED (p = 0.409)
+
+Overall, the post hoc analysis indicates that:
+
+The BOTH cue leads to significantly faster responses than LED,
+BUZZER does not differ significantly from either BOTH or LED,
+
+The clearest and strongest performance benefit arises specifically from combining auditory and visual cues.
+
+These results are consistent with principles of multisensory integration, in which redundant sensory information facilitates faster responses than unimodal cues.
+
+
+## Conclusion
+
+The purpose of this study was to determine whether different sensory cues influence human reaction time while controlling for natural individual differences using a Randomized Complete Block Design with replication. Participants responded to three cue types LED (visual), BUZZER (auditory), and BOTH (audio–visual) reaction times were measured using an Arduino-based timing system.
+
+Analysis using a linear mixed-effects model revealed a statistically significant effect of Cue Type on reaction time (*p* = 0.038). Participants responded fastest when presented with both auditory and visual cues simultaneously, followed by the BUZZER cue, and slowest when relying on the LED cue alone. Follow-up pairwise comparisons using estimated marginal means showed that reaction times under the BOTH cue were significantly faster than under the LED cue, while the BUZZER cue did not differ significantly from either condition. These findings suggest that audio–visual redundancy enhances response speed, consistent with theories of multisensory integration and redundant signal facilitation.
+
+Although individual participants differed noticeably in their baseline reaction speeds, this variability was appropriately accounted for through the random-effects structure of the mixed-effects model. Treating participant as a random blocking factor reduced unexplained variability and improved the precision of the treatment comparison, highlighting the usefulness of blocking when substantial individual differences are present.
+
+Diagnostic plots indicated that the assumptions of normality and constant variance were reasonably satisfied. Independence was addressed through the experimental design and model structure, as repeated trials within participants were explicitly modeled using random effects. As a result, no transformation of the response variable was necessary, and the conclusions drawn from the analysis are valid.
+
+Several limitations should be noted. Reaction times were collected in a controlled indoor environment, so the results may not fully generalize to real-world settings where distractions, fatigue, or lighting conditions vary. The sample size of five participants limits broader generalizability, although replication within blocks improved the reliability of estimated treatment effects.
+
+Future studies could expand the number of participants, include additional cue types (such as vibration or color-based signals), or examine how cue effectiveness interacts with other factors such as age, gaming experience, or environmental noise. Using higher-frequency response devices or more complex reaction tasks may also provide deeper insights into sensory processing and human performance.
+
+Overall, the results of this experiment provide clear evidence that combined audio–visual cues lead to faster reaction times than visual cues alone, and they demonstrate the value of blocking and mixed-effects modeling when individual differences play a substantial role in human performance data.
+
+<br>
+
+<img src="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExdzFpMGQzZjZxaWp3aHU0OWRnZ29oMXhod3hkYTV5dmNwMXUwOGx6NiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/mFDWuDppjQJjite6FS/giphy.gif" 
+     width="250" style="display:block; margin-left:auto; margin-right:auto;">
