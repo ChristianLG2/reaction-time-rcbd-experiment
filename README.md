@@ -2,6 +2,8 @@
 
 A randomized complete block design (RCB[1]) experiment analyzing the effect of sensory cue type (visual, auditory, combined) on human reaction time, using a linear mixed-effects model in R.
 
+https://christianlg2.github.io/reaction-time-rcbd-experiment/
+
 ## Overview
 
 This project investigates whether the type of sensory cue presented, visual (LED), auditory (buzzer), or combined (both), produces meaningful differences in human reaction time. Reaction time was measured with an Arduino Uno-based timing rig, and the data were analyzed using a Randomized Complete Block Design with Person as the blocking factor, extended to a linear mixed-effects model to account for replication within blocks.
